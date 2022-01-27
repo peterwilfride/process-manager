@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    process_str = "ps -auf | tail -n +2 | awk '{print $2}'";
 
     // define title of columns
     ui->table->setColumnCount(7);
@@ -40,7 +41,7 @@ MainWindow::~MainWindow()
 QStringList MainWindow::getAllProcesses()
 {
     //process.start("sh", QStringList() << "-c" << "ls /proc | grep -E '^[0-9]+$'");
-    process.start("sh", QStringList() << "-c" << "ps -auf | tail -n +2 | awk '{print $2}'");
+    process.start("sh", QStringList() << "-c" << process_str);
     process.waitForFinished(-1);
 
     QString str = process.readAllStandardOutput();
@@ -112,6 +113,20 @@ void MainWindow::update_value()
     ui->nproc_label->setText(QString::number(processList.size()));
 }
 
+void MainWindow::filter()
+{
+    if(ui->filter_edit->text().isEmpty()){
+        process_str = "ps -auf | tail -n +2 | awk '{print $2}'";
+    }else{
+        QString query = ui->filter_edit->text();
+        process_str.clear();
+        process_str += "ps -auf | tail -n +2";
+        process_str += " | grep " + query + "| head -1";
+        process_str += "| awk '{print $2}'";
+    }
+
+}
+
 void MainWindow::TimerSlot()
 {
     while (ui->table->rowCount() > 0)
@@ -126,3 +141,47 @@ void MainWindow::TimerSlot()
 }
 
 
+
+void MainWindow::on_filter_button_clicked()
+{
+    filter();
+}
+
+void MainWindow::on_kill_Button_clicked()
+{
+    if(!ui->pid_edit->text().isEmpty()){
+        QString pid_filter= ui->pid_edit->text();
+        runCommand("kill -9 -" + pid_filter);
+    }
+}
+
+void MainWindow::on_stop_Button_clicked()
+{
+    if(!ui->pid_edit->text().isEmpty()){
+        QString pid_filter= ui->pid_edit->text();
+        runCommand("kill -19 -" + pid_filter);
+    }
+}
+
+void MainWindow::on_cont_Button_clicked()
+{
+    if(!ui->pid_edit->text().isEmpty()){
+        QString pid_filter= ui->pid_edit->text();
+        runCommand("kill -18 -" + pid_filter);
+    }
+}
+
+void MainWindow::on_priority_button_clicked()
+{
+    if(!(ui->ppid_edit->text().isEmpty()||ui->priority_edit->text().isEmpty())){
+        QString ppid_filter = ui->ppid_edit->text();
+        QString priority_edit = ui->priority_edit->text();
+        int number_priority = priority_edit.toInt()-20;
+        if(number_priority >= 0){
+            runCommand("renice -n " + QString::number(number_priority) + " " + ppid_filter);
+            ui->warning_label->clear();
+        }else{
+            ui->warning_label->setText("O número precisa ser maior ou igual a 20!");
+        }
+    }
+}

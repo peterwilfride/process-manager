@@ -20,9 +20,20 @@ public:
     QString runCommand(QString cmd);
     void fillTable();
     void update_value();
+    void filter();
 
 private slots:
     void TimerSlot(); // NEW slot
+
+    void on_filter_button_clicked();
+
+    void on_kill_Button_clicked();
+
+    void on_stop_Button_clicked();
+
+    void on_cont_Button_clicked();
+
+    void on_priority_button_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -31,6 +42,7 @@ private:
     int toUpdate = 0;
     QStringList processList;
     QTimer* timer;
+    QString process_str;
 
 
 };
