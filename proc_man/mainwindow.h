@@ -18,11 +18,20 @@ public:
     ~MainWindow();
     QStringList getAllProcesses();
     QString runCommand(QString cmd);
+    void fillTable();
+    void update_value();
 
+private slots:
+    void TimerSlot(); // NEW slot
 
 private:
     Ui::MainWindow *ui;
     QProcess process;
+    int timerId;
+    int toUpdate = 0;
+
+    QTimer* timer;
+
 
 };
 #endif // MAINWINDOW_H
