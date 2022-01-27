@@ -11,7 +11,11 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    // set default query process
     process_str = "ps -auf | tail -n +2 | awk '{print $2}'";
+
+    ui->warning_label->clear();
 
     // define title of columns
     ui->table->setColumnCount(7);
@@ -40,16 +44,19 @@ MainWindow::~MainWindow()
 
 QStringList MainWindow::getAllProcesses()
 {
-    //process.start("sh", QStringList() << "-c" << "ls /proc | grep -E '^[0-9]+$'");
+    //qDebug() << process_str;
     process.start("sh", QStringList() << "-c" << process_str);
     process.waitForFinished(-1);
 
     QString str = process.readAllStandardOutput();
-    QStringList list1 = str.split("\n");
+    QStringList process_list = str.split("\n");
 
-    list1.removeLast();
+    //qDebug() << process_list;
+    //qDebug() << "";
 
-    return list1;
+    process_list.removeLast();
+
+    return process_list;
 }
 
 QString MainWindow::runCommand(QString cmd)
@@ -64,7 +71,7 @@ QString MainWindow::runCommand(QString cmd)
 void MainWindow::fillTable()
 {
     foreach(auto process, processList) {
-        QString pid	= runCommand("cat /proc/"+process+"/status | grep ^PPid | awk '{print $2}'");
+        QString pid	= runCommand("cat /proc/"+process+"/status | grep ^Pid | awk '{print $2}'");
 
         if (pid.isEmpty()) //process dont exist
             continue;
@@ -72,7 +79,7 @@ void MainWindow::fillTable()
         QString name = runCommand("cat /proc/"+process+"/status | grep -i name | awk '{print $2}'");
         QString state = runCommand("cat /proc/"+process+"/stat | awk '{print $3}'");
         QString threads = runCommand("cat /proc/"+process+"/status | grep -i threads | awk '{print $2}'");
-        QString ppid = runCommand("cat /proc/"+process+"/status | grep ^Pid | awk '{print $2}'");
+        QString ppid = runCommand("cat /proc/"+process+"/status | grep ^PPid | awk '{print $2}'");
         QString prioridade = runCommand("cat /proc/"+process+"/stat | awk '{print $18}'");
         QString username = runCommand("cat /proc/"+process+"/loginuid | id -nu");
 
@@ -120,17 +127,17 @@ void MainWindow::filter()
     }else{
         QString query = ui->filter_edit->text();
         process_str.clear();
-        process_str += "ps -auf | tail -n +2";
-        process_str += " | grep " + query + "| head -1";
-        process_str += "| awk '{print $2}'";
+        process_str = "ps -auf | tail -n +2 | grep " + query + " | awk '{print $2}'";
     }
-
 }
 
 void MainWindow::TimerSlot()
 {
-    while (ui->table->rowCount() > 0)
-    {
+    if(ui->filter_edit->text().isEmpty()) {
+        process_str = "ps -auf | tail -n +2 | awk '{print $2}'";
+    }
+
+    while (ui->table->rowCount() > 0) {
         ui->table->removeRow(0);
     }
     processList = getAllProcesses();
@@ -173,15 +180,26 @@ void MainWindow::on_cont_Button_clicked()
 
 void MainWindow::on_priority_button_clicked()
 {
-    if(!(ui->ppid_edit->text().isEmpty()||ui->priority_edit->text().isEmpty())){
-        QString ppid_filter = ui->ppid_edit->text();
+    if(!(ui->pid_edit->text().isEmpty()||ui->priority_edit->text().isEmpty())){
+        QString pid_filter = ui->pid_edit->text();
+        QString current_priority = runCommand("cat /proc/"+pid_filter+"/stat | awk '{print $18}'");
         QString priority_edit = ui->priority_edit->text();
-        int number_priority = priority_edit.toInt()-20;
+        int number_priority = abs(priority_edit.toInt() - current_priority.toInt());
         if(number_priority >= 0){
-            runCommand("renice -n " + QString::number(number_priority) + " " + ppid_filter);
+            runCommand("renice -n " + QString::number(number_priority) + " " + pid_filter);
             ui->warning_label->clear();
         }else{
-            ui->warning_label->setText("O número precisa ser maior ou igual a 20!");
+            ui->warning_label->setText("<font color='red'>Prioridade deve ser >= 20!</font>");
         }
     }
 }
+
+void MainWindow::on_table_cellDoubleClicked(int row, int column)
+{
+    QTableWidgetItem* current_row = ui->table->item(row, column);
+
+    QTableWidgetItem* current_pid = ui->table->item(current_row->row(), 3);
+
+    ui->pid_edit->setText(current_pid->text());
+}
+

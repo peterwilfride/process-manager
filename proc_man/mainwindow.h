@@ -35,6 +35,8 @@ private slots:
 
     void on_priority_button_clicked();
 
+    void on_table_cellDoubleClicked(int row, int column);
+
 private:
     Ui::MainWindow *ui;
     QProcess process;

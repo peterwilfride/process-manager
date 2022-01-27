@@ -89,7 +89,6 @@
       <widget class="QLabel" name="label_4">
        <property name="font">
         <font>
-         <weight>75</weight>
          <bold>true</bold>
         </font>
        </property>
@@ -178,23 +177,23 @@
    <widget class="QLabel" name="warning_label">
     <property name="geometry">
      <rect>
-      <x>530</x>
-      <y>400</y>
-      <width>231</width>
-      <height>41</height>
+      <x>440</x>
+      <y>390</y>
+      <width>241</width>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
-     <string/>
+     <string>warning message!</string>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>661</width>
-      <height>27</height>
+      <width>671</width>
+      <height>28</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_4">
@@ -256,23 +255,13 @@
    <widget class="QWidget" name="">
     <property name="geometry">
      <rect>
-      <x>11</x>
-      <y>400</y>
-      <width>507</width>
-      <height>27</height>
+      <x>440</x>
+      <y>360</y>
+      <width>241</width>
+      <height>28</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_5">
-     <item>
-      <widget class="QLabel" name="label_6">
-       <property name="text">
-        <string>PPID:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="ppid_edit"/>
-     </item>
      <item>
       <widget class="QLabel" name="label_10">
        <property name="text">
@@ -286,7 +275,7 @@
      <item>
       <widget class="QPushButton" name="priority_button">
        <property name="text">
-        <string>Definir prioridade</string>
+        <string>ok</string>
        </property>
       </widget>
      </item>
@@ -299,7 +288,7 @@
      <x>0</x>
      <y>0</y>
      <width>920</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>
