@@ -29,7 +29,7 @@ private:
     QProcess process;
     int timerId;
     int toUpdate = 0;
-
+    QStringList processList;
     QTimer* timer;
 
 
