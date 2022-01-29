@@ -4,13 +4,30 @@
 #include <QTableWidget>
 #include <QTimerEvent>
 #include <QTimer>
-#include <QProgressBar>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    // get number of cpu's
+    int n_cpu = runCommand("nproc --all").replace("\n","").toInt();
+
+    // initiliaze each objectss
+    for (int i = 0; i < n_cpu; i++) {
+        cpu.append(new QProgressBar(this));
+        cpu_label.append(new QLabel(this));
+        cpu[i]->setValue(50);
+        cpu_label[i]->setText("cpu_"+QString::number(i));
+    }
+
+    // set geometry of each object
+    int x = 740, y = 40, w = 170, h =25;
+    for (int i = 0; i < n_cpu ; i++) {
+        cpu_label[i]->setGeometry(x-50, y + i*h + i*5, w, h);
+        cpu[i]->setGeometry(x, y + i*h + i*5, w, h);
+    }
 
     // set default query process
     process_str = "ps -auf | tail -n +2 | awk '{print $2}'";

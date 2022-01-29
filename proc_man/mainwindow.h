@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include <QProcess>
 #include <QList>
+#include <QProgressBar>
+#include <QLabel>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -46,6 +48,7 @@ private:
     QTimer* timer;
     QString process_str;
 
-
+    QList<QProgressBar*> cpu;
+    QList<QLabel*> cpu_label;
 };
 #endif // MAINWINDOW_H
