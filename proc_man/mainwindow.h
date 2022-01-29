@@ -23,6 +23,9 @@ public:
     void fillTable();
     void update_value();
     void filter();
+    QList<QStringList> getCPUusage();
+    QList<int> calcCPUusage(QList<QStringList>& cpu_stats);
+
 
 private slots:
     void TimerSlot(); // NEW slot
@@ -50,5 +53,8 @@ private:
 
     QList<QProgressBar*> cpu;
     QList<QLabel*> cpu_label;
+    int n_cpu;
+    QList<QStringList> cpu_stats;
+    QList<int> cpu_int;
 };
 #endif // MAINWINDOW_H

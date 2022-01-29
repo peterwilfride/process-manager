@@ -12,7 +12,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     // get number of cpu's
-    int n_cpu = runCommand("nproc --all").replace("\n","").toInt();
+    n_cpu = runCommand("nproc --all").replace("\n","").toInt();
 
     // initiliaze each objectss
     for (int i = 0; i < n_cpu; i++) {
@@ -41,6 +41,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     // hide vertical headers
     ui->table->verticalHeader()->hide();
+
+    // Collecting CPU usage
+    cpu_stats = getCPUusage();
+    cpu_int = calcCPUusage(cpu_stats);
+
+    for(int i = 0; i < n_cpu; i++){
+        cpu[i]->setValue(cpu_int[i]);
+    }
 
     timer = new QTimer(this); // create it
     connect(timer, &QTimer::timeout, this, &MainWindow::TimerSlot ); // connect it
@@ -148,6 +156,33 @@ void MainWindow::filter()
     }
 }
 
+QList<QStringList> MainWindow::getCPUusage()
+{
+    for(int i = 0; i < n_cpu; i++){
+        QString x = runCommand("head -"+QString::number(i+2)+" /proc/stat|tail -1");
+        QStringList y = x.split(" ");
+        y.removeFirst();
+        y.back().replace("\n", "");
+        //qDebug() << y;
+        cpu_stats.append(y);
+    }
+    return cpu_stats;
+}
+
+QList<int> MainWindow::calcCPUusage(QList<QStringList>& cpu_stats)
+{
+    for(int i = 0; i < n_cpu; i++){
+        int sum = 0;
+        for(int j = 0; j < 10; j++){
+            sum += cpu_stats[i][j].toInt();
+        }
+        double idle_cpu = cpu_stats[i][3].toInt()/(double)sum;
+        double not_idle_cpu = 1 - idle_cpu;
+        cpu_int.append((int)(not_idle_cpu*100));
+    }
+    return cpu_int;
+}
+
 void MainWindow::TimerSlot()
 {
     if(ui->filter_edit->text().isEmpty()) {
@@ -160,6 +195,17 @@ void MainWindow::TimerSlot()
     processList = getAllProcesses();
 
     fillTable();
+
+    // Collecting CPU usage
+    cpu_stats = getCPUusage();
+    cpu_int = calcCPUusage(cpu_stats);
+
+    for(int i = 0; i < n_cpu; i++){
+        cpu[i]->setValue(cpu_int[i]);
+    }
+
+    qDebug() << cpu_int;
+    qDebug() << cpu_stats;
 
     update_value();
 }
