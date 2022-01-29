@@ -14,11 +14,21 @@ MainWindow::MainWindow(QWidget *parent)
     // get number of cpu's
     n_cpu = runCommand("nproc --all").replace("\n","").toInt();
 
+    // initialize idle and sum for each cpu
+    for (int i = 0; i < n_cpu; i++) {
+        last_sum.append(0);
+        last_idle.append(0.0);
+    }
+
+    // Collecting CPU usage
+    cpu_stats = getCPUusage();
+    cpu_int = calcCPUusage(cpu_stats);
+
     // initiliaze each objectss
     for (int i = 0; i < n_cpu; i++) {
         cpu.append(new QProgressBar(this));
         cpu_label.append(new QLabel(this));
-        cpu[i]->setValue(50);
+        cpu[i]->setValue(cpu_int[i]);
         cpu_label[i]->setText("cpu_"+QString::number(i));
     }
 
@@ -32,7 +42,9 @@ MainWindow::MainWindow(QWidget *parent)
     // set default query process
     process_str = "ps -auf | tail -n +2 | awk '{print $2}'";
 
+    // clear warning labels
     ui->warning_label->clear();
+    ui->warning_label_cpu->clear();
 
     // define title of columns
     ui->table->setColumnCount(7);
@@ -41,14 +53,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // hide vertical headers
     ui->table->verticalHeader()->hide();
-
-    // Collecting CPU usage
-    cpu_stats = getCPUusage();
-    cpu_int = calcCPUusage(cpu_stats);
-
-    for(int i = 0; i < n_cpu; i++){
-        cpu[i]->setValue(cpu_int[i]);
-    }
 
     timer = new QTimer(this); // create it
     connect(timer, &QTimer::timeout, this, &MainWindow::TimerSlot ); // connect it
@@ -158,12 +162,12 @@ void MainWindow::filter()
 
 QList<QStringList> MainWindow::getCPUusage()
 {
+    cpu_stats.clear();
     for(int i = 0; i < n_cpu; i++){
         QString x = runCommand("head -"+QString::number(i+2)+" /proc/stat|tail -1");
         QStringList y = x.split(" ");
         y.removeFirst();
         y.back().replace("\n", "");
-        //qDebug() << y;
         cpu_stats.append(y);
     }
     return cpu_stats;
@@ -171,14 +175,24 @@ QList<QStringList> MainWindow::getCPUusage()
 
 QList<int> MainWindow::calcCPUusage(QList<QStringList>& cpu_stats)
 {
+    cpu_int.clear();
+
     for(int i = 0; i < n_cpu; i++){
+        // sum and idle for this cpu
         int sum = 0;
         for(int j = 0; j < 10; j++){
             sum += cpu_stats[i][j].toInt();
         }
-        double idle_cpu = cpu_stats[i][3].toInt()/(double)sum;
-        double not_idle_cpu = 1 - idle_cpu;
-        cpu_int.append((int)(not_idle_cpu*100));
+        double idle = cpu_stats[i][3].toDouble();
+
+        double idle_delta = idle - last_idle[i];
+        double sum_delta = sum - last_sum[i];
+
+        last_idle[i] = idle;
+        last_sum[i] = sum;
+
+        double not_idle_cpu = 100 * (1.0 - idle_delta/sum_delta);
+        cpu_int.append((int)(not_idle_cpu));
     }
     return cpu_int;
 }
@@ -196,7 +210,6 @@ void MainWindow::TimerSlot()
 
     fillTable();
 
-    // Collecting CPU usage
     cpu_stats = getCPUusage();
     cpu_int = calcCPUusage(cpu_stats);
 
@@ -204,8 +217,8 @@ void MainWindow::TimerSlot()
         cpu[i]->setValue(cpu_int[i]);
     }
 
-    qDebug() << cpu_int;
-    qDebug() << cpu_stats;
+    //qDebug() << cpu_stats;
+    //qDebug() << cpu_int;
 
     update_value();
 }

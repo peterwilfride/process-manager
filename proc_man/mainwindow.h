@@ -56,5 +56,9 @@ private:
     int n_cpu;
     QList<QStringList> cpu_stats;
     QList<int> cpu_int;
+
+    QList<int> last_sum;
+    QList<double> last_idle;
+
 };
 #endif // MAINWINDOW_H
