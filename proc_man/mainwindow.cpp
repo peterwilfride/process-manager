@@ -265,7 +265,7 @@ void MainWindow::on_priority_button_clicked()
         QString pid_filter = ui->pid_edit->text();
         QString current_priority = runCommand("cat /proc/"+pid_filter+"/stat | awk '{print $18}'");
         QString priority_edit = ui->priority_edit->text();
-        int number_priority = abs(priority_edit.toInt() - current_priority.toInt());
+        int number_priority = abs(priority_edit.toInt() - 20);
         if(number_priority >= 0){
             runCommand("renice -n " + QString::number(number_priority) + " " + pid_filter);
             ui->warning_label->clear();
@@ -291,9 +291,10 @@ void MainWindow::on_cpu_button_clicked()
         QString pid_filter = ui->pid_edit->text();
         QString cpu_range = ui->cpu_edit->text();
         QString confirm_alocation = runCommand("taskset -pc "+cpu_range + " " + pid_filter + " | tail -1").replace("\n","");
+        qDebug() << confirm_alocation;
         ui->warning_label_cpu->setText(confirm_alocation);
-        sleep(5);
-        ui->warning_label_cpu->clear();
+        //sleep(5);
+        //ui->warning_label_cpu->clear();
     } else {
         ui->warning_label_cpu->setText("<font color='red'>Deve passar CPU's para alocação!</font>");
     }
