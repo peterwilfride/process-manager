@@ -4,6 +4,7 @@
 #include <QTableWidget>
 #include <QTimerEvent>
 #include <QTimer>
+#include <unistd.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -47,8 +48,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->warning_label_cpu->clear();
 
     // define title of columns
-    ui->table->setColumnCount(7);
-    QStringList titles = {"NOME", "THREADS", "STATE", "PID", "PPID", "PRIORITY", "OWNER"};
+    ui->table->setColumnCount(8);
+    QStringList titles = {"NOME", "CPU %", "THREADS", "STATE", "PID", "PPID", "PRIORITY", "OWNER"};
     ui->table->setHorizontalHeaderLabels(titles);
 
     // hide vertical headers
@@ -106,6 +107,7 @@ void MainWindow::fillTable()
             continue;
 
         QString name = runCommand("cat /proc/"+process+"/status | grep -i name | awk '{print $2}'");
+        QString cpu_prct = runCommand("ps -auf | grep "+process+" | awk '{print $3}'");
         QString state = runCommand("cat /proc/"+process+"/stat | awk '{print $3}'");
         QString threads = runCommand("cat /proc/"+process+"/status | grep -i threads | awk '{print $2}'");
         QString ppid = runCommand("cat /proc/"+process+"/status | grep ^PPid | awk '{print $2}'");
@@ -113,6 +115,7 @@ void MainWindow::fillTable()
         QString username = runCommand("cat /proc/"+process+"/loginuid | id -nu");
 
         name.replace("\n", "");
+        cpu_prct.replace("\n", "");
         state.replace("\n", "");
         threads.replace("\n", "");
         pid.replace("\n", "");
@@ -122,6 +125,7 @@ void MainWindow::fillTable()
 
 
         QTableWidgetItem* name_item = new QTableWidgetItem(name);
+        QTableWidgetItem* cpu_prct_item = new QTableWidgetItem(cpu_prct+"%");
         QTableWidgetItem* state_item = new QTableWidgetItem(state);
         QTableWidgetItem* threads_item = new QTableWidgetItem(threads);
         QTableWidgetItem* pid_item = new QTableWidgetItem(pid);
@@ -132,12 +136,13 @@ void MainWindow::fillTable()
         // add rows
         ui->table->insertRow(ui->table->rowCount());
         ui->table->setItem( ui->table->rowCount()-1, 0, name_item);
-        ui->table->setItem( ui->table->rowCount()-1, 1, threads_item);
-        ui->table->setItem( ui->table->rowCount()-1, 2, state_item);
-        ui->table->setItem( ui->table->rowCount()-1, 3, pid_item);
-        ui->table->setItem( ui->table->rowCount()-1, 4, ppid_item);
-        ui->table->setItem( ui->table->rowCount()-1, 5, prioridade_item);
-        ui->table->setItem( ui->table->rowCount()-1, 6, userame_item);
+        ui->table->setItem( ui->table->rowCount()-1, 1, cpu_prct_item);
+        ui->table->setItem( ui->table->rowCount()-1, 2, threads_item);
+        ui->table->setItem( ui->table->rowCount()-1, 3, state_item);
+        ui->table->setItem( ui->table->rowCount()-1, 4, pid_item);
+        ui->table->setItem( ui->table->rowCount()-1, 5, ppid_item);
+        ui->table->setItem( ui->table->rowCount()-1, 6, prioridade_item);
+        ui->table->setItem( ui->table->rowCount()-1, 7, userame_item);
     }
 }
 
@@ -274,8 +279,23 @@ void MainWindow::on_table_cellDoubleClicked(int row, int column)
 {
     QTableWidgetItem* current_row = ui->table->item(row, column);
 
-    QTableWidgetItem* current_pid = ui->table->item(current_row->row(), 3);
+    QTableWidgetItem* current_pid = ui->table->item(current_row->row(), 4);
 
     ui->pid_edit->setText(current_pid->text());
+}
+
+
+void MainWindow::on_cpu_button_clicked()
+{
+    if (!ui->cpu_edit->text().isEmpty()) {
+        QString pid_filter = ui->pid_edit->text();
+        QString cpu_range = ui->cpu_edit->text();
+        QString confirm_alocation = runCommand("taskset -pc "+cpu_range + " " + pid_filter + " | tail -1").replace("\n","");
+        ui->warning_label_cpu->setText(confirm_alocation);
+        sleep(5);
+        ui->warning_label_cpu->clear();
+    } else {
+        ui->warning_label_cpu->setText("<font color='red'>Deve passar CPU's para alocação!</font>");
+    }
 }
 
